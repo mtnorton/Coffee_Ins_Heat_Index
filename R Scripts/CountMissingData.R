@@ -1,3 +1,6 @@
+# CountMissingData.R
+# 
+
 rawdata <- read.csv("/Users/mtnorton/Dropbox/temp/HeatIndex/medtemp.csv")
 
 # up to 22 years of data at 59 stations, matrix of 59x22

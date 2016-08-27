@@ -115,8 +115,8 @@ for (i in 1:59)
   # Elevations below 3350/2 = 1675, subtract thermal units
   # Elevations above 3350/2 = 1675, subtract thermal units
   
-  elev_trend[i] <- (as.numeric(sta_output[i,2])-1675)*2
-  index_detrended[i,] <- indexes[i,]+elev_trend[i]
+  #elev_trend[i] <- (as.numeric(sta_output[i,2])-1675)*2
+  #index_detrended[i,] <- indexes[i,]+elev_trend[i]
   
   points(rep(sta_output[i,2],32),indexes[i,]) #,col=which(unique(sta_output[,1])==sta_output[i,1]),pch=which(unique(sta_output[,1])==sta_output[i,1]))
 }
@@ -143,6 +143,7 @@ sta_coords <- matrix(NA,59,2)
 sta_coords[,1] <- as.vector(as.numeric(sta_output[,4]))
 sta_coords[,2] <- as.vector(as.numeric(sta_output[,3]))
 S <- SpatialPoints(sta_coords)
+crs(S) <- CRS("+init=epsg:4326")
 
 ######################
 # GEOSTATISTICS
