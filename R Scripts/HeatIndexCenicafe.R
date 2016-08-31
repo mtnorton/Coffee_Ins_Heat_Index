@@ -6,19 +6,49 @@
 # Gov't and CC data is in different format, so code is different
 # Here: get a year of data as a column starting 8/1 of each year, take sum
 
-rawdata <- read.csv("/Users/mtnorton/Dropbox/temp/HeatIndex/cenicafe2.csv")
+rawdata_cc <- read.csv("/Users/mtnorton/Dropbox/temp/HeatIndex/cenicafe2.csv")
 
+######################
+# Station Coordinates
+######################
+stations_cc <- as.matrix(read.csv("/Users/mtnorton/Dropbox/temp/CCData/CCstations_wo_names.csv",header=FALSE))
+
+sta_coords_cc <- stations_cc[,10:9]
+
+######################
+# Get start timing by department
+######################
+dept_bound <- shapefile("/Users/mtnorton/Coffee_Ins_Heat_Index/COL_adm/COL_adm1.shp")
+dept_bound$timing <- c(0,2,0,0,0,3,2,0,0,1,3,0,0,1,0,0,1,3,3,0,1,4,0,4,2,0,5,0,1,4,0,0)
+
+SCC <- SpatialPoints(sta_coords_cc)
+crs(SCC) <- CRS("+init=epsg:4326")
+
+SCC <- spTransform(SCC,crs(dept_bound))
+
+station_timing_cc <- over(SCC,dept_bound)$timing
+dept_start_month_cc <- c(7,1,2,6,11) # By months just below
+start_month_cc <- dept_start_month_cc[station_timing_cc]
+# Insert placeholders of 1 for stations w/o coordinates
+# Missing stations: 1,10,14,16,20,48
+ph <- 1
+start_month_cc <- c(ph,start_month_cc[1:8],ph,start_month_cc[9:11],ph,start_month_cc[12],ph,start_month_cc[13:15],ph,start_month_cc[16:42],ph,start_month_cc[43:44])
+
+######################
+# Read data from CSV
+######################
 indexes_cc <- matrix(NA, 50, 26)
 total_missing_cc <- matrix(NA, 50, 26)
 
 sta_names <- matrix(NA, 50, 3)
 
 #Initialize
-sta1 <- rawdata[1,1]
-sta2 <- rawdata[1,2]
-sta3 <- rawdata[1,3]
+sta1 <- rawdata_cc[1,1]
+sta2 <- rawdata_cc[1,2]
+sta3 <- rawdata_cc[1,3]
 
-sta_names[1,1:3] <- as.matrix(rawdata[1,1:3])
+sta_names[1,1:3] <- as.matrix(rawdata_cc[1,1:3])
+
 
 sta_count <- 1
 # too_many_missing <- FALSE
@@ -27,41 +57,41 @@ sta_count <- 1
 # Expected missing per month
 month_length <- c(31,28,31,30,31,30,31,31,30,31,30,31)
 
-for (i in (1:nrow(rawdata)))
+for (i in (1:nrow(rawdata_cc)))
 {
-  year <- rawdata[i,4]
-  month <- rawdata[i,5]
+  year <- rawdata_cc[i,4]
+  month <- rawdata_cc[i,5]
   
-  if (!((rawdata[i,1]==sta1) & (rawdata[i,2]==sta2) & (rawdata[i,3]==sta3)))
+  if (!((rawdata_cc[i,1]==sta1) & (rawdata_cc[i,2]==sta2) & (rawdata_cc[i,3]==sta3)))
   {
     sta_count <- sta_count+1
-    sta1 <- rawdata[i,1]
-    sta2 <- rawdata[i,2]
-    sta3 <- rawdata[i,3]
-    sta_names[sta_count,1:3] <- as.matrix(rawdata[i,1:3])
+    sta1 <- rawdata_cc[i,1]
+    sta2 <- rawdata_cc[i,2]
+    sta3 <- rawdata_cc[i,3]
+    sta_names[sta_count,1:3] <- as.matrix(rawdata_cc[i,1:3])
     #init <- TRUE
   }
   
-  if (month > 7) 
+  if (month > start_month_cc[sta_count]) 
   {ind_year <- year-1988}
   else 
   {ind_year <- year-1989}
     
-  if ((month==8) & (rawdata[i,6]==1))
+  if ((month==(start_month_cc[sta_count]+1)) & (rawdata_cc[i,6]==1))
   {  
     numdays <- 365
     if (year%%4==3) {numdays <- numdays+1}
     # Make it as own object
-    mo_data <- rawdata[i:(i+numdays),7]-10
+    mo_data <- rawdata_cc[i:(i+numdays),7]-10
     mo_data <- sum(mo_data,na.rm=TRUE)
     
     # Count missing
-    total_missing_cc[sta_count, ind_year] <- length(which(is.na(rawdata[i:(i+numdays),7])))
+    total_missing_cc[sta_count, ind_year] <- length(which(is.na(rawdata_cc[i:(i+numdays),7])))
     
     indexes_cc[sta_count, ind_year] <- mo_data
       
     #i <- i + 365
-    #if (rawdata[i,3]%%4==0 & month==2) {i <- i + 1}
+    #if (rawdata_cc[i,3]%%4==0 & month==2) {i <- i + 1}
     
   }
   print(paste(i, month, year, ind_year, mo_data))
@@ -72,21 +102,25 @@ for (i in (1:nrow(rawdata)))
 indexes_cc <- indexes_cc[,-26]
 total_missing_cc <- total_missing_cc[,-26]
 # delete rows 1, 10, 14, 16, 20, 48
+# Not in coordinates file
 indexes_cc <- indexes_cc[-c(1,10,14,16,20,48),]
 total_missing_cc <- total_missing_cc[-c(1,10,14,16,20,48),]
 
-stations_cc <- as.matrix(read.csv("/Users/mtnorton/Dropbox/temp/CCData/CCstations_wo_names.csv",header=FALSE))
-
 sta_output_cc <- matrix(NA, 44, 3)
 
-plot(rep(1,25),indexes_cc[1,],col='white',ylim=c(-2000,7000),xlim=c(0,2500),xlab="ELEVATION",ylab="Heat Index")
+total_missing365_cc <- total_missing_cc/365
+screened_indexes_cc <- indexes_cc
+screened_indexes_cc[which(total_missing365_cc>0.05)] <- NA
+
+
+plot(rep(1,25),indexes_cc[1,],col='white',ylim=c(-2000,7000),xlim=c(700,2300),xlab="ELEVATION",ylab="Heat Index")
 
 for (i in 1:44)
 {
   sta_output_cc[i,1:3] <- as.matrix(stations_cc[i,c(2,9:10)])
-  points(rep(sta_output_cc[i,1],25),indexes_cc[i,],col='red') #,col=which(unique(sta_output[,1])==sta_output[i,1]),pch=which(unique(sta_output[,1])==sta_output[i,1]))
+  points(rep(sta_output_cc[i,1],25),screened_indexes_cc[i,],col='red') #,col=which(unique(sta_output[,1])==sta_output[i,1]),pch=which(unique(sta_output[,1])==sta_output[i,1]))
 }
 
-output <- cbind(unique(rawdata[,2]),indexes,sta_output)
+output_cc <- cbind(unique(rawdata_cc[,2]),indexes_cc,sta_output_cc)
+write.csv(output_cc,"/Users/mtnorton/Dropbox/temp/HeatIndex/HeatIndexCC.csv")
 
-write.csv(output,"/Users/mtnorton/Dropbox/temp/HeatIndex/HeatIndex.csv")

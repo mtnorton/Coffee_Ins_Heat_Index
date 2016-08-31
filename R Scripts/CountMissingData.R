@@ -60,3 +60,75 @@ for (i in (1:nrow(rawdata)))
 #as vector
 total_days_missing <- as.vector(total_missing)
 plot(ecdf(total_days_missing),xlab='Days of missing data',main='CDF of missing days of data',pch=1,ylab="Cumulative Density of Missing Days")
+
+############## 
+# FIGURE OUT WHAT PERCENTAGE OF YEARS ARE COMPLETE
+
+# Using output and total_missing variable from HeatIndex.R
+# Using total_missing_cc from HeatIndexCenicafe.R
+# Using ecoto_merge from plot_dept.R
+
+total_missing365 <- (total_missing/365)
+total_missing365[which(is.na(output[,2:33]))] <- NA
+
+# Set NAs by hand for station records which are not started yet
+total_missing365[1,1:7] <- NA
+total_missing365[14,1] <- NA
+total_missing365[36,1] <- NA
+total_missing365[41,1:3] <- NA
+total_missing365[54,1:30] <- NA
+total_missing365[,32] <- NA
+
+ecoto_reg_merge <- over(sta_temp,ecotopos)$Ecotopo
+
+regs <- output[,34]
+regs[which(is.na(ecoto_reg_merge))] <- NA
+
+length(which(total_missing365[which(regs=="1A"),]<0.05))/length(total_missing365[which(regs=="1A"),])
+length(which(total_missing365[which(regs=="1A"),]>0.15))/length(total_missing365[which(regs=="1A"),])
+
+length(which(total_missing365[which(regs=="1B"),]<0.05))/length(total_missing365[which(regs=="1B"),])
+length(which(total_missing365[which(regs=="1B"),]>0.15))/length(total_missing365[which(regs=="1B"),])
+
+length(which(total_missing365[which(regs=="2A"),]<0.05))/length(total_missing365[which(regs=="2A"),])
+length(which(total_missing365[which(regs=="2A"),]>0.15))/length(total_missing365[which(regs=="2A"),])
+
+length(which(total_missing365[which(regs=="2B"),]<0.05))/length(total_missing365[which(regs=="2B"),])
+length(which(total_missing365[which(regs=="2B"),]>0.15))/length(total_missing365[which(regs=="2B"),])
+
+length(which(total_missing365[which(regs=="3A"),]<0.05))/length(total_missing365[which(regs=="3A"),])
+length(which(total_missing365[which(regs=="3A"),]>0.15))/length(total_missing365[which(regs=="3A"),])
+
+length(which(total_missing365[which(regs=="3B"),]<0.05))/length(total_missing365[which(regs=="3B"),])
+length(which(total_missing365[which(regs=="3B"),]>0.15))/length(total_missing365[which(regs=="3B"),])
+
+length(which(total_missing365[which(regs=="4"),]<0.05))/length(total_missing365[which(regs=="4"),])
+length(which(total_missing365[which(regs=="4"),]>0.15))/length(total_missing365[which(regs=="4"),])
+
+total_missing365 <- (total_missing_cc/365)
+# Rerun ecoto_merge from plot_dept.R here
+ecoto_reg_merge <- over(sta_coords,ecotopos)$Ecotopo
+ecoto_reg_merge <- paste0(substr(ecoto_reg_merge,1,1),substr(ecoto_reg_merge,4,4))
+ecoto_reg_merge[which(ecoto_reg_merge=="NANA")] = NA
+regs <- ecoto_reg_merge
+
+length(which(total_missing365[which(regs=="1A"),]<0.05))/length(total_missing365[which(regs=="1A"),])
+length(which(total_missing365[which(regs=="1A"),]>0.15))/length(total_missing365[which(regs=="1A"),])
+
+length(which(total_missing365[which(regs=="1B"),]<0.05))/length(total_missing365[which(regs=="1B"),])
+length(which(total_missing365[which(regs=="1B"),]>0.15))/length(total_missing365[which(regs=="1B"),])
+
+length(which(total_missing365[which(regs=="2A"),]<0.05))/length(total_missing365[which(regs=="2A"),])
+length(which(total_missing365[which(regs=="2A"),]>0.15))/length(total_missing365[which(regs=="2A"),])
+
+length(which(total_missing365[which(regs=="2B"),]<0.05))/length(total_missing365[which(regs=="2B"),])
+length(which(total_missing365[which(regs=="2B"),]>0.15))/length(total_missing365[which(regs=="2B"),])
+
+length(which(total_missing365[which(regs=="3A"),]<0.05))/length(total_missing365[which(regs=="3A"),])
+length(which(total_missing365[which(regs=="3A"),]>0.15))/length(total_missing365[which(regs=="3A"),])
+
+length(which(total_missing365[which(regs=="3B"),]<0.05))/length(total_missing365[which(regs=="3B"),])
+length(which(total_missing365[which(regs=="3B"),]>0.15))/length(total_missing365[which(regs=="3B"),])
+
+length(which(total_missing365[which(regs=="4"),]<0.05))/length(total_missing365[which(regs=="4"),])
+length(which(total_missing365[which(regs=="4"),]>0.15))/length(total_missing365[which(regs=="4"),])
