@@ -77,7 +77,7 @@ for (i in 1:31)
 plot(1989:2013,perc_payouts[7:31],ylab="% Payouts",xlab="Year")
 title(main=paste0("Strikepoint = ",strike))
 
-strikes = c(2500,2600,2700,2800,2900,3000,3100,3200,3300,3400,3500)
+strikes = 1:40*100+2000 #c(2500,2600,2700,2800,2900,3000,3100,3200,3300,3400,3500)
 perc_payouts <- vector("numeric",5)
 
 for (i in 1:length(strikes))
@@ -89,6 +89,6 @@ for (i in 1:length(strikes))
   perc_payouts[i] <- perc_payouts[i]/num_indexes
 }
 
-plot(strikes,perc_payouts[1:length(strikes)],ylab="% Payouts",xlab="Year")
+plot(strikes,perc_payouts[1:length(strikes)],ylab="% Payouts",xlab="Strikepoint")
 title(main="Percentage of payouts for different index values")
 
