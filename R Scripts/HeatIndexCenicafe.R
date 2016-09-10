@@ -17,6 +17,8 @@ sta_coords_cc <- stations_cc[,10:9]
 
 ######################
 # Get start timing by department
+# NOT USED ANYMORE
+# Now we calculate 2 different indexes on each station
 ######################
 dept_bound <- shapefile("/Users/mtnorton/Coffee_Ins_Heat_Index/COL_adm/COL_adm1.shp")
 dept_bound$timing <- c(0,2,0,0,0,3,2,0,0,1,3,0,0,1,0,0,1,3,3,0,1,4,0,4,2,0,5,0,1,4,0,0)
@@ -27,7 +29,7 @@ crs(SCC) <- CRS("+init=epsg:4326")
 SCC <- spTransform(SCC,crs(dept_bound))
 
 station_timing_cc <- over(SCC,dept_bound)$timing
-dept_start_month_cc <- c(7,1,2,6,11) # By months just below
+dept_start_month_cc <- c(7,2,2,7,2)
 start_month_cc <- dept_start_month_cc[station_timing_cc]
 # Insert placeholders of 1 for stations w/o coordinates
 # Missing stations: 1,10,14,16,20,48
@@ -77,9 +79,10 @@ for (i in (1:nrow(rawdata_cc)))
   else 
   {ind_year <- year-1989}
     
-  if ((month==(start_month_cc[sta_count]+1)) & (rawdata_cc[i,6]==1))
+  if ((month==(start_month_cc[sta_count])) & (rawdata_cc[i,6]==1))
   {  
-    numdays <- 365
+    if (month==7) {numdays <- 215}
+    else {numdays <- 211}
     if (year%%4==3) {numdays <- numdays+1}
     # Make it as own object
     mo_data <- rawdata_cc[i:(i+numdays),7]-10
@@ -108,9 +111,11 @@ total_missing_cc <- total_missing_cc[-c(1,10,14,16,20,48),]
 
 sta_output_cc <- matrix(NA, 44, 3)
 
-total_missing365_cc <- total_missing_cc/365
+total_missing365_cc[which(start_month_cc==7),] <- total_missing_cc[which(start_month_cc==7),]/215
+total_missing365_cc[which(start_month_cc==2),] <- total_missing_cc[which(start_month_cc==2),]/212
 screened_indexes_cc <- indexes_cc
 screened_indexes_cc[which(total_missing365_cc>0.05)] <- NA
+
 
 
 plot(rep(1,25),indexes_cc[1,],col='white',ylim=c(-2000,7000),xlim=c(700,2300),xlab="ELEVATION",ylab="Heat Index")

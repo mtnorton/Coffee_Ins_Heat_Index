@@ -26,7 +26,6 @@ sta_names_govt <- vector("character",59)
 for (i in 1:59)
 {
   sta_output[i,1:4] <- cbind(stations[which(stations[,3]==unique(rawdata[,2])[i]/10),c(2,7:9)])
-  
   sta_names_govt[i] <- stations[which(stations[,3]==unique(rawdata[,2])[i]/10),4]
 }
 
@@ -50,15 +49,10 @@ dept_bound$timing <- c(0,2,0,0,0,3,2,0,0,1,3,0,0,1,0,0,1,3,3,0,1,4,0,4,2,0,5,0,1
 S <- spTransform(S,crs(dept_bound))
 
 station_timing <- over(S,dept_bound)$timing
-dept_start_month <- c(7,1,2,6,11) # By months just below
+dept_start_month <- c(7,2,2,7,2) # By months
+dept_end_month <- c(2,9,9,2,9) # Month after end
 start_month <- dept_start_month[station_timing]
-
-# Timing:
-#1: (July 1 - June 30) Cauca, Cundinamarca, Huila, Narino, Tolima
-#2: (January 1 - December 31) Antioquia, Caldas, Risaralda
-#3: (February 1 - January 31) Boyaca, Magdalena, Cesar, Guajira
-#4: (June 1 - May 31) Norte de Santander, Quindio, Valle
-#5: (November 1 - October 31) Santander
+end_month <- dept_end_month[station_timing]
 
 # Expected missing per month
 mo_exp_missing <- c(0,3,0,1,0,1,0,0,1,0,1,0)
@@ -92,53 +86,56 @@ for (i in (1:nrow(rawdata)))
   {ind_year <- year-1983}
   
   if (init==TRUE) 
-    {if (rawdata[i,4]==start_month[sta_count]) {init = FALSE}}
+    {if (rawdata[i,4]==(start_month[sta_count]-1)) {init <- FALSE}}
   else
      {
-      # Make it as own object
-      mo_data <- rawdata[i,5:35]
-      
-      # Count missing
-      num_missing <- length(which(mo_data==-99))
-      num_data <- length(which(mo_data!=-99))
-      # Look up # expected to be missing by month
-      exp_missing <- mo_exp_missing[month]
-      if (rawdata[i,3]%%4==0 & month==2) {exp_missing <- exp_missing-1} 
-      
-      total_missing[sta_count,ind_year] <- total_missing[sta_count,ind_year]-num_data
-      
-      if (num_missing == 31)
-      { 
-        indexes[sta_count, ind_year] <- NA
-        init <- TRUE
-      }
+      if (rawdata[i,4]==end_month[sta_count]) {init <- TRUE}
       else
       {
-        num_missing <- num_missing - exp_missing
-      
-      #if (num_missing > exp_missing+3) 
-      #  {too_many_missing <- TRUE}
-      #else
-      #{
-        # Replace -99 with NA
-        mo_data <- replace(mo_data,mo_data==-99,NA)
+        # Make it as own object
+        mo_data <- rawdata[i,5:35]
         
-        # Calculate index here
-        # Subtract 10 from the total
-        # Needs to be adjusted based on whatever is decided about missing data
-        mo_data <- mo_data-10
-        mo_data_sum <- sum(mo_data,na.rm=TRUE)
-        if ((num_missing > 1) && (num_missing <= 3))
-        {
-          #mo_data<- na.omit(mo_data)
-          mo_data_sum <- mo_data_sum + num_missing * mean(as.numeric(mo_data),na.rm=TRUE)
+        # Count missing
+        num_missing <- length(which(mo_data==-99))
+        num_data <- length(which(mo_data!=-99))
+        # Look up # expected to be missing by month
+        exp_missing <- mo_exp_missing[month]
+        if (rawdata[i,3]%%4==0 & month==2) {exp_missing <- exp_missing-1} 
+        
+        total_missing[sta_count,ind_year] <- total_missing[sta_count,ind_year]-num_data
+        
+        if (num_missing == 31)
+        { 
+          indexes[sta_count, ind_year] <- NA
+          init <- TRUE
         }
-        indexes[sta_count, ind_year] <- sum(c(indexes[sta_count, ind_year], mo_data_sum),na.rm=TRUE)
+        else
+        {
+          num_missing <- num_missing - exp_missing
         
-        # For debugging, can comment out
-        print(paste(i, month, year, ind_year, mo_data_sum, indexes[sta_count, ind_year]))
-      }
-      
+        #if (num_missing > exp_missing+3) 
+        #  {too_many_missing <- TRUE}
+        #else
+        #{
+          # Replace -99 with NA
+          mo_data <- replace(mo_data,mo_data==-99,NA)
+          
+          # Calculate index here
+          # Subtract 10 from the total
+          # Needs to be adjusted based on whatever is decided about missing data
+          mo_data <- mo_data-10
+          mo_data_sum <- sum(mo_data,na.rm=TRUE)
+          if ((num_missing > 1) && (num_missing <= 3))
+          {
+            #mo_data<- na.omit(mo_data)
+            mo_data_sum <- mo_data_sum + num_missing * mean(as.numeric(mo_data),na.rm=TRUE)
+          }
+          indexes[sta_count, ind_year] <- sum(c(indexes[sta_count, ind_year], mo_data_sum),na.rm=TRUE)
+          
+          # For debugging, can comment out
+          print(paste(i, month, year, ind_year, mo_data_sum, indexes[sta_count, ind_year]))
+        }
+      }   
   }
   
 }
@@ -149,7 +146,9 @@ write.csv(output,"/Users/mtnorton/Dropbox/temp/HeatIndex/HeatIndex.csv")
 
 # For index investigation
 
-total_missing365 <- total_missing/365
+total_missing[which(start_month==7),] <- total_missing[which(start_month==7),]-150
+total_missing[which(start_month==2),] <- total_missing[which(start_month==2),]-154
+total_missing365 <- total_missing/215
 screened_indexes <- indexes
 screened_indexes[which(total_missing365>0.05)] <- NA
 screened_indexes <- screened_indexes[,-32] #Drop incomplete last year
